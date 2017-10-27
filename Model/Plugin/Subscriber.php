@@ -29,6 +29,21 @@ class Subscriber
      * @var \Magento\Store\Model\StoreManagerInterface
      */
     protected $_storeManager;
+
+    /**
+     * @var \Magento\Framework\App\Response\RedirectInterface
+     */
+    protected $redirect;
+
+    /**
+     * @var \Magento\Framework\App\RequestInterface
+     */
+    protected $request;
+
+    /**
+     * @var \Ebizmarts\MailChimp\Helper\Interests
+     */
+    protected $interestsHelper;
     /**
      * @param \Ebizmarts\MailChimp\Helper\Data $helper
      * @param \Magento\Customer\Model\ResourceModel\CustomerRepository $customer
@@ -40,7 +55,13 @@ class Subscriber
         \Ebizmarts\MailChimp\Helper\Data $helper,
         \Magento\Customer\Model\ResourceModel\CustomerRepository $customer,
         \Magento\Customer\Model\Session $customerSession,
-        \Magento\Store\Model\StoreManagerInterface $storeManager
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Framework\App\Response\RedirectInterface $redirect,
+        \Magento\Framework\App\RequestInterface $request,
+        \Ebizmarts\MailChimp\Helper\Interests $interestsHelper
+
+
+
     ) {
     
         $this->_helper          = $helper;
@@ -48,12 +69,16 @@ class Subscriber
         $this->_customerSession = $customerSession;
         $this->_storeManager    = $storeManager;
         $this->_api             = $this->_helper->getApi();
+        $this->redirect         = $redirect;
+        $this->request          = $request;
+        $this->interestsHelper  = $interestsHelper;
     }
 
     public function beforeUnsubscribeCustomerById(
         $subscriber,
         $customerId
     ) {
+        die('work');
 //        $this->_helper->log(__METHOD__);
         $subscriber->loadByCustomerId($customerId);
 //        if ($subscriber->getMailchimpId() != null) {
@@ -110,10 +135,21 @@ class Subscriber
         $subscriber,
         $email
     ) {
+
+
+
 //        $this->_helper->log(__METHOD__);
         $storeId = $this->_storeManager->getStore()->getId();
-
+        $groupEnabled = false;
         if ($this->_helper->isMailChimpEnabled($storeId)) {
+
+
+
+            if($this->interestsHelper->getSelectedGroups($storeId)){
+                $groupEnabled = true;
+            }
+
+
             $api = $this->_api;
             if ($this->_helper->isDoubleOptInEnabled($storeId)) {
                 $status = 'pending';
@@ -123,7 +159,42 @@ class Subscriber
             $mergeVars = $this->_helper->getMergeVars($subscriber, $email);
             try {
                 $md5HashEmail = md5(strtolower($email));
-                $return = $api->lists->members->addOrUpdate($this->_helper->getDefaultList(), $md5HashEmail, null, $status, $mergeVars, null, null, null, null, $email, $status);
+                /**
+                 * subscribe for groups , this will be used for newsletter form in footer
+                 *
+                 */
+                $params = $this->request->getParams();
+                $referUrl = $this->redirect->getRefererUrl();
+                $isSubscribeComingFromNewPage = $params['customsubscribe'];
+                var_dump($params); die();
+                if($groupEnabled && isset($params['group']) && $isSubscribeComingFromNewPage) {
+
+                    $groups = $params['group'];
+                    $listId = $this->_helper->getDefaultList($storeId);
+                    $interestCategoryId = $this->interestsHelper->getSelectedInterestCategory($storeId);
+
+                    $interestids = array();
+                    foreach ($groups as $interestId) {
+                        $interestids[$interestId]= true;
+
+                    }
+
+
+                    $return = $api->lists->members->addOrUpdate($this->_helper->getDefaultList(), $md5HashEmail, null, $status, $mergeVars, $interestids, null, null, null, $email, $status);
+
+
+
+                }
+                //subscribe for list
+                else {
+                    $return = $api->lists->members->addOrUpdate($this->_helper->getDefaultList(), $md5HashEmail, null, $status, $mergeVars, null, null, null, null, $email, $status);
+
+                }
+
+
+
+
+
 //                $this->_helper->log($return);
 //                if (isset($return['id'])) {
 //                    $subscriber->setMailchimpId($return['id']);

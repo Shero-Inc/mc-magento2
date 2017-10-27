@@ -38,6 +38,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     const XML_ABANDONEDCART_FIRSTDATE   = 'mailchimp/abandonedcart/firstdate';
     const XML_ABANDONEDCART_PAGE     = 'mailchimp/abandonedcart/page';
     const XML_PATH_IS_SYNC           = 'mailchimp/general/issync';
+    const XML_PATH_INTEREST          = 'mailchimp/general/monkeyinterestcategory';
 
 
     const ORDER_STATE_OK             = 'complete';

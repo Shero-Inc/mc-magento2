@@ -1,0 +1,25 @@
+<?php
+
+$groups = $block->getSelectedGroups();
+
+var_dump($groups);
+
+?>
+<form action="/mailchimp/customsubscribe/subscribegroups/" method="post">
+    <label for="email">Email</label>
+    <input type="text" name="email">
+    <input type="hidden" name="customsubscribe" value="1">
+    <?php $row=0; ?>
+    <?php if($groups): ?>
+        <?php foreach ($groups as $group): ?>
+            <input type="checkbox" name="group[]" value="<?php echo $group['id'] ?>"><?php echo $group['label']; ?><br>
+            <?php $row++ ?>
+        <?php endforeach; ?>
+    <?php endif; ?>
+
+
+    <br>
+    <label for="email">Submit</label>
+
+    <input type="submit" name="submit" value="submit">
+</form>

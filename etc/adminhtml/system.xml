@@ -62,6 +62,43 @@
                         <field id="*/*/active">1</field>
                     </depends>
                 </field>
+
+                <field id="activeinterests" sortOrder="32" translate="label" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enabled Group Interest</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>This enables groups, to have customers for separate group</comment>
+                </field>
+
+                <field id="monkeyinterestcategory" translate="label" type="select" sortOrder="33" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Mailchimp Interest Category</label>
+                    <source_model>Ebizmarts\MailChimp\Model\Config\Source\MonkeyListInterestCategory</source_model>
+                    <!--<backend_model>Ebizmarts\MailChimp\Model\Config\Backend\MonkeyList</backend_model>-->
+                    <comment>Save first to see the list of Mailchimp groups updated below</comment>
+                    <depends>
+                        <field id="*/*/active">1</field>
+                        <field id="*/*/activeinterests">1</field>
+
+                    </depends>
+                </field>
+
+                <field id="monkeyinterestcategorygroups" translate="label" type="multiselect" sortOrder="34" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Mailchimp Groups</label>
+                    <source_model>Ebizmarts\MailChimp\Model\Config\Source\MonkeyListInterestCategoryInterest</source_model>
+                    <!--<backend_model>Ebizmarts\MailChimp\Model\Config\Backend\MonkeyList</backend_model>-->
+                    <depends>
+                        <field id="*/*/active">1</field>
+                        <field id="*/*/activeinterests">1</field>
+
+                    </depends>
+                </field>
+
+                <field id="subscribe_group_footer" sortOrder="36" translate="label" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Subscribe to All Groups on Footer</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Subscribe to all groups on footer subscription form</comment>
+                </field>
+
+
                 <field id="account_details" translate="label" type="textarea" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Account Details</label>
                     <frontend_model>Ebizmarts\MailChimp\Block\Adminhtml\System\Config\Account</frontend_model>
