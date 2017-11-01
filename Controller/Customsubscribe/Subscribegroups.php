@@ -24,7 +24,7 @@ class Subscribegroups extends Action
     /**
      * @var \Ebizmarts\MailChimp\Helper\Data
      */
-    private $_helper;
+    protected $_helper;
 
     /**
      *
@@ -32,6 +32,9 @@ class Subscribegroups extends Action
      */
     protected $_subscriber;
 
+    protected $api;
+
+    protected $messageManager;
     /**
      * Index constructor.
      * @param Context $context
@@ -42,43 +45,64 @@ class Subscribegroups extends Action
     public function __construct(
         Context $context,
         \Magento\Framework\View\Result\PageFactory $resultPageFactory,
-        \Magento\Newsletter\Model\Subscriber $subscriber
+        \Magento\Newsletter\Model\Subscriber $subscriber,
+        \Mailchimp $api,
+        \Ebizmarts\MailChimp\Helper\Data $helper,
+        \Magento\Framework\Message\ManagerInterface $messageManager
     ){
-        $this->_resultPageFactory = $resultPageFactory;
+        $this->_resultPageFactory   = $resultPageFactory;
+        $this->_helper              = $helper;
+        $this->messageManager       = $messageManager;
+        $this->api = $this->_helper->getApi();
         $this->_subscriber= $subscriber;
         parent::__construct($context);
     }
 
     /**
      *
-     * @return \Magento\Framework\Controller\ResultInterface|\Magento\Framework\View\Result\Page
+     * @return \Magento\Framework\Controller\ResultInterface|\Magento\Framework\View\Result\Pagew
      */
     public function execute()
     {
 
         $params = $this->getRequest()->getParams();
         $email = $params['email'];
-
+        $groups = $params['group'];
         try{
-
+            $md5HashEmail = md5(strtolower($email));
             $checkSubscriber = $this->_subscriber->loadByEmail($email);
             if(!$checkSubscriber->isSubscribed()) {
                 $this->_subscriber->subscribe($email);
-            } else {
-                //TODO:: SUBSCRIBE FOR GROUPS HERE
+
+            } else { //subscribe for specific group.
+                $interestids = array();
+                foreach ($groups as $group){
+                    $interestids[$group] = true;
+                }
+                $return =  $this->api->lists->members->addOrUpdate($this->_helper->getDefaultList(), $md5HashEmail, null,
+                    'subscribed', null, $interestids, null, null, null, $email, 'subscribed');
             }
-
-        }catch (\Exception $e) {
-            var_dump($e);
-            die();
+            $this->messageManager->addSuccess("You subscribed successfully.");
+        }catch (Exception $e) {
+            var_dump($e->getMessage());
+            $this->messageManager->addSuccess($e->getMessage());
         }
-
         $this->_redirect('*/*/index');
-//        var_dump($params);
-//        echo "subscribe groups";
-//        die();
         $resultPage = $this->_resultPageFactory->create();
         return $resultPage;
+    }
+
+
+    /**
+     *
+     * @param $email
+     * @return mixed
+     */
+    public function checkIfgroupSubscribed($email)
+    {
+        $md5HashEmail = md5(strtolower($email));
+        $customerMailchimpData = $this->api->lists->members->get($this->_helper->getDefaultList(), $md5HashEmail);
+        return $customerMailchimpData['interests'];
     }
 
 

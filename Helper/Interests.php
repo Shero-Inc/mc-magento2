@@ -13,6 +13,7 @@ class Interests extends \Magento\Framework\App\Helper\AbstractHelper
     const XML_PATH_ENABLEINTERESTGROUPCATEGORY          = 'mailchimp/general/activeinterests';
     const XML_PATH_INTEREST                              = 'mailchimp/general/monkeyinterestcategory';
     const XML_PATH_INTERESTGROUPS                        = 'mailchimp/general/monkeyinterestcategorygroups';
+    const XML_PATH_SUBSCRIBE_ALL_GROUPS_FOOTER          =   'mailchimp/general/subscribe_group_footer';
 
 
 
@@ -48,6 +49,11 @@ class Interests extends \Magento\Framework\App\Helper\AbstractHelper
         return $this->mailchimpDataHelper->getConfigValue(self::XML_PATH_ENABLEINTERESTGROUPCATEGORY, $store);
     }
 
+    public function allowToSubscribeAllGroupsFooter($store)
+    {
+        return $this->mailchimpDataHelper->getConfigValue(self::XML_PATH_SUBSCRIBE_ALL_GROUPS_FOOTER, $store);
+    }
+
     /**
      * Get selected interest category from admin
      * @param $store
@@ -60,7 +66,8 @@ class Interests extends \Magento\Framework\App\Helper\AbstractHelper
 
 
     /**
-     * Get all groups based on Category selected from admin
+     * Get all groups based on Category selected from admin, not selected groups from admin, but all groups that
+     * are in admin, by interest category selected
      * @return array
      */
     public function getAllGroups()
@@ -94,7 +101,7 @@ class Interests extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * Get selected groups by admin.
+     * Get selected groups by admin, groups that are selected after list is selected
      * @param $store
      * @param bool $showLabels this shows labels of the groups if true, if no, show only group id
      * @return array|mixed

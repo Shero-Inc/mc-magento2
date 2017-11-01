@@ -137,19 +137,9 @@ class Subscriber
     ) {
 
 
-
 //        $this->_helper->log(__METHOD__);
         $storeId = $this->_storeManager->getStore()->getId();
-        $groupEnabled = false;
         if ($this->_helper->isMailChimpEnabled($storeId)) {
-
-
-
-            if($this->interestsHelper->getSelectedGroups($storeId)){
-                $groupEnabled = true;
-            }
-
-
             $api = $this->_api;
             if ($this->_helper->isDoubleOptInEnabled($storeId)) {
                 $status = 'pending';
@@ -160,46 +150,37 @@ class Subscriber
             try {
                 $md5HashEmail = md5(strtolower($email));
                 /**
-                 * subscribe for groups , this will be used for newsletter form in footer
+                 * subscribe for groups , this will be used for newsletter form in footer, to whitelist
+                 * all groups that are selected from admin
                  *
                  */
                 $params = $this->request->getParams();
-                $referUrl = $this->redirect->getRefererUrl();
-                $isSubscribeComingFromNewPage = $params['customsubscribe'];
-                var_dump($params); die();
-                if($groupEnabled && isset($params['group']) && $isSubscribeComingFromNewPage) {
-
-                    $groups = $params['group'];
-                    $listId = $this->_helper->getDefaultList($storeId);
-                    $interestCategoryId = $this->interestsHelper->getSelectedInterestCategory($storeId);
-
+                if(isset($params['customsubscribe'])){ //if subscription comes from new page
                     $interestids = array();
-                    foreach ($groups as $interestId) {
-                        $interestids[$interestId]= true;
-
+                    $groups = $params['group'];
+                    foreach ($groups as $group) {
+                        $interestids[$group]= true;
                     }
-
-
                     $return = $api->lists->members->addOrUpdate($this->_helper->getDefaultList(), $md5HashEmail, null, $status, $mergeVars, $interestids, null, null, null, $email, $status);
 
+                }else if($this->interestsHelper->getSelectedGroups($storeId) &&
+                    $this->interestsHelper->allowToSubscribeAllGroupsFooter($storeId)) { //if subscription comes from footer newsletter
+                    /** Subscribe to all groups that are selected from admin, for footer form **/
+                    $groupSelectedToSubscribe = explode(',',$this->interestsHelper->getSelectedGroups($storeId));
 
+                    $interestids = array();
+                    foreach ($groupSelectedToSubscribe as $interestId) {
+                        $interestids[$interestId]= true;
+                    }
+                    $return = $api->lists->members->addOrUpdate($this->_helper->getDefaultList(), $md5HashEmail, null, $status, $mergeVars, $interestids, null, null, null, $email, $status);
 
-                }
-                //subscribe for list
-                else {
+                } else {//subscribe for list only, no groups included
                     $return = $api->lists->members->addOrUpdate($this->_helper->getDefaultList(), $md5HashEmail, null, $status, $mergeVars, null, null, null, null, $email, $status);
-
                 }
-
-
-
-
-
-//                $this->_helper->log($return);
-//                if (isset($return['id'])) {
-//                    $subscriber->setMailchimpId($return['id']);
-//                }
             } catch (\Exception $e) {
+
+                var_dump($e->getMessage());
+                die();
                 $this->_helper->log($e->getMessage());
             }
         }
