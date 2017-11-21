@@ -24,16 +24,7 @@ class Index extends Action
     /**
      * @var ResultFactory
      */
-    private $_resultFactory;
-    /**
-     * @var \Ebizmarts\MailChimp\Helper\Data
-     */
-    private $_helper;
-    /**
-     * @var \Ebizmarts\MailChimp\Model\MailChimpWebhookRequestFactory
-     */
-    private $_chimpWebhookRequestFactory;
-    private $_remoteAddress;
+    private $_resultPageFactory;
 
     /**
      * Index constructor.

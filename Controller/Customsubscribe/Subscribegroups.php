@@ -32,6 +32,9 @@ class Subscribegroups extends Action
      */
     protected $_subscriber;
 
+    /**
+     * @var \Mailchimp
+     */
     protected $api;
 
     protected $messageManager;
@@ -64,7 +67,6 @@ class Subscribegroups extends Action
      */
     public function execute()
     {
-
         $params = $this->getRequest()->getParams();
         $email = $params['email'];
         $groups = $params['group'];
@@ -93,17 +95,17 @@ class Subscribegroups extends Action
     }
 
 
-    /**
-     *
-     * @param $email
-     * @return mixed
-     */
-    public function checkIfgroupSubscribed($email)
-    {
-        $md5HashEmail = md5(strtolower($email));
-        $customerMailchimpData = $this->api->lists->members->get($this->_helper->getDefaultList(), $md5HashEmail);
-        return $customerMailchimpData['interests'];
-    }
+//    /**
+//     *
+//     * @param $email
+//     * @return mixed
+//     */
+//    public function checkIfgroupSubscribed($email)
+//    {
+//        $md5HashEmail = md5(strtolower($email));
+//        $customerMailchimpData = $this->api->lists->members->get($this->_helper->getDefaultList(), $md5HashEmail);
+//        return $customerMailchimpData['interests'];
+//    }
 
 
 }

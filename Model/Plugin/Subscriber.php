@@ -179,8 +179,6 @@ class Subscriber
                 }
             } catch (\Exception $e) {
 
-                var_dump($e->getMessage());
-                die();
                 $this->_helper->log($e->getMessage());
             }
         }

@@ -288,4 +288,19 @@ class Interests extends \Magento\Framework\App\Helper\AbstractHelper
     {
         return md5(strtolower($customerEmail));
     }
+
+    /**
+     * Get all array keys as array for specific array
+     * @param $array
+     * @return array
+     */
+    public function getArrayKeyAsArray($array)
+    {
+        $keys = [];
+        foreach ($array as $key => $value) {
+            $keys[] = $key;
+        }
+
+        return $keys;
+    }
 }
