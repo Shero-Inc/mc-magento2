@@ -15,7 +15,7 @@ class Interests extends \Magento\Framework\App\Helper\AbstractHelper
     const XML_PATH_INTERESTGROUPS                        = 'mailchimp/general/monkeyinterestcategorygroups';
     const XML_PATH_SUBSCRIBE_ALL_GROUPS_FOOTER          =   'mailchimp/general/subscribe_group_footer';
 
-
+    protected $_storeManager;
 
     /**
      * Data helper
@@ -24,20 +24,44 @@ class Interests extends \Magento\Framework\App\Helper\AbstractHelper
     protected $mailchimpDataHelper;
 
     /**
+     * @var Magento\Customer\Model\Session
+     */
+    protected $customerSession;
+
+    /**
      * @var \Magento\Framework\App\RequestInterface
      */
     protected $request;
 
+    protected $subscriber;
+
 
     public function __construct(
         \Ebizmarts\MailChimp\Helper\Data $mailchimpDataHelper,
-        \Magento\Framework\App\RequestInterface $request
+        \Magento\Framework\App\RequestInterface $request,
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Customer\Model\Session $session,
+        \Magento\Newsletter\Model\Subscriber $subscriber
+
     )
     {
+        $this->_storeManager        = $storeManager;
         $this->mailchimpDataHelper  = $mailchimpDataHelper;
         $this->request              = $request;
+        $this->customerSession      = $session;
+        $this->subscriber           = $subscriber;
     }
 
+
+    /**
+     * Get store identifier
+     *
+     * @return  int
+     */
+    public function getStoreId()
+    {
+        return $this->_storeManager->getStore()->getId();
+    }
 
     /**
      * Check if group interests are enabled
@@ -55,7 +79,7 @@ class Interests extends \Magento\Framework\App\Helper\AbstractHelper
     }
 
     /**
-     * Get selected interest category from admin
+     * Get selected interest category from admin, to be allowed for subscribe on frontend
      * @param $store
      * @return mixed
      */
@@ -171,5 +195,97 @@ class Interests extends \Magento\Framework\App\Helper\AbstractHelper
         return $data;
     }
 
+    /**
+     * If customer is subscribed, we are returning all interests for this customer.
+     * @param $listId
+     * @param $customerEmail
+     */
+    public function getCustomerSubscribedInterests($listId, $subscriberEmail)
+    {
+        if($this->subcriberExists($subscriberEmail)){
+            $subscriberHashEmail = $this->getMd5HashEmail($subscriberEmail);
+            $scopeData = $this->getScope();
 
+            $storeId =$scopeData[0]['storeId'];
+            $scope = $scopeData[0]['scope'];
+
+            if($this->mailchimpDataHelper->getApiKey($storeId)) {
+                $interestsDataGroups = $this->mailchimpDataHelper->getApi()->lists->members->get($listId, $subscriberHashEmail);
+                return $interestsDataGroups['interests'];
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param $listId
+     * @param $subscriberHashEmail
+     */
+//    public function isInterestSubscribed($listId, $subscriberHashEmail)
+//    {
+//        $scopeData = $this->getScope();
+//        $subscribedInterests = $this->getCustomerSubscribedInterests($listId, $subscriberHashEmail);
+//        $storeId =$scopeData[0]['storeId'];
+//        $selectedGroups = explode(",",$this->getSelectedGroups($storeId));
+//
+//        foreach ($subscribedInterests as $interestId => $interest) {
+//            if(in_array($interestId, $selectedGroups)) {
+//                return true;
+//            }
+//        }
+//    }
+
+
+    public function getCustomerSession()
+    {
+
+        if($this->customerSession->isLoggedIn()) {
+            return $this->customerSession->getCustomer();
+//            echo   $customerSession->getCustomer()->getName()."<br/>";  // get  Full Name
+//            echo   $customerSession->getCustomer()->getFirstname()."<br/>";  // get Customer First name
+//            echo   $customerSession->getCustomer()->getLastname()."<br/>";  // get  Last Name
+        }
+        return false;
+    }
+
+    /**
+     *
+     * @param $customerEmail
+     * @return bool
+     */
+    public function isCustomerSubscribed($customerEmail)
+    {
+        $checkSubscriber = $this->subscriber->loadByEmail($customerEmail);
+        if ($checkSubscriber->isSubscribed()) {
+            // Customer is subscribed
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Check if customer exists as subscriber in Magento.
+     * @param $customerEmail
+     * @return bool
+     */
+    public function subcriberExists($customerEmail)
+    {
+        $checkSubscriber = $this->subscriber->loadByEmail($customerEmail);
+        if ($checkSubscriber->getId()) {
+            // subscriber exits
+            return true;
+        }
+        return false;
+        
+    }
+
+    /**
+     * Get email as md5 hashed and lowercase
+     * @param $customerEmail
+     * @return string
+     */
+    public function getMd5HashEmail($customerEmail)
+    {
+        return md5(strtolower($customerEmail));
+    }
 }

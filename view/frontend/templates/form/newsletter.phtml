@@ -1,29 +1,101 @@
 <?php
+
 /**
- * Copyright © 2013-2017 Magento, Inc. All rights reserved.
- * See COPYING.txt for license details.
+ * Author: Ledian Hymetllari <ledian@sherocommerce.com>
  */
 
-// @codingStandardsIgnoreFile
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+/** @var  $interesthHelper */
+$interesthHelper = $this->helper('\Ebizmarts\MailChimp\Helper\Interests');
+
+/** @var  $dataHelper */
+$dataHelper = $this->helper('\Ebizmarts\MailChimp\Helper\Data');
+
+/** @var  $storeId */
+$storeId = $interesthHelper->getStoreId();
+
+/** @var  $defaultlist */
+$defaultlist = $dataHelper->getDefaultList($storeId);
+
+/** @var  $customer Customer Session */
+$customer = $interesthHelper->getCustomerSession();
+
+/** @var  $customerSubscribedInterest */
+$customerSubscribedInterest = $interesthHelper->getCustomerSubscribedInterests($defaultlist, $customer->getEmail());
+//var_dump($customerSubscribedInterest);
+
+$customerSubscribedInterestIds = array();
+if($customerSubscribedInterest) {
+    foreach ($customerSubscribedInterest as $interestId => $type ) {
+        if($type==true) {
+            $customerSubscribedInterestIds[] = $interestId ;
+        }
+    }
+}
+//var_dump($customerSubscribedInterestIds);
+//die();
+
+
+
+$details2 = $interesthHelper->getSelectedGroups($storeId, true);
 
 ?>
-<?php echo $block->getChildHtml('form_before')?>
-ledian
-<form class="form form-newsletter-manage" action="<?php /* @escapeNotVerified */ echo $block->getAction() ?>" method="post" id="form-validate">
-    <fieldset class="fieldset">
-        <?php echo $block->getBlockHtml('formkey')?>
-        <legend class="legend"><span><?php /* @escapeNotVerified */ echo __('Subscription option') ?></span></legend><br>
-        <div class="field choice">
-            <input type="checkbox" name="is_subscribed" id="subscription" value="1" title="<?php /* @escapeNotVerified */ echo __('General Subscription') ?>"<?php if ($block->getIsSubscribed()): ?> checked="checked"<?php endif; ?> class="checkbox">
-            <label for="subscription" class="label"><span><?php /* @escapeNotVerified */ echo __('General Subscription') ?></span></label>
+<?php
+    //Customer is not subscribed and groups are enabled
+    //Customer is subscribed and groups are enabled
+?>
+<?php if($interesthHelper->getSelectedGroups($storeId)): ?>
+
+        <?php $allowedGroups = $interesthHelper->getSelectedGroups($storeId, true); ?>
+        <form action="/mailchimp/customsubscribe/customerdashboard" method="post">
+
+            <div class="field choice">
+                <label for="subscription" class="label"><span><?php /* @escapeNotVerified */ echo __('Choose Subscription') ?></span></label>
+            </div>
+<!--            <input type="text" name="email" value="--><?php //echo $customer->getEmail(); ?><!--">-->
+            <input type="hidden" name="customsubscribe" value="1">
+            <input type="hidden" name="email" value="<?php echo $customer->getEmail(); ?>">
+
+            <?php foreach($allowedGroups as $group): ?>
+
+<!--                --><?php //var_dump($group, $customerSubscribedInterestIds);  ?>
+                <?php if(in_array($group['id'], $customerSubscribedInterestIds)): ?>
+                        <input type="checkbox" checked="checked" name="group[]" value="<?php echo $group['id'] ?>"><?php echo $group['label']; ?><br>
+                    <?php else:  ?>
+                        <input type="checkbox" name="group[]" value="<?php echo $group['id'] ?>"><?php echo $group['label']; ?><br>
+
+                <?php endif; ?>
+            <?php endforeach; ?>
+            <br>
+            <label for="email">Submit</label>
+
+            <input type="submit" name="submit" value="submit">
+        </form>
+
+<?php else: ?>
+    <?php
+    //Customer is subscribed, and group subscription are disabled
+    //Customer is not subscribed and group subscription are disabled
+    ?>
+    <?php echo $block->getChildHtml('form_before')?>
+    <form class="form form-newsletter-manage" action="<?php /* @escapeNotVerified */ echo $block->getAction() ?>" method="post" id="form-validate">
+        <fieldset class="fieldset">
+            <?php echo $block->getBlockHtml('formkey')?>
+            <legend class="legend"><span><?php /* @escapeNotVerified */ echo __('Subscription option') ?></span></legend><br>
+            <div class="field choice">
+                <input type="checkbox" name="is_subscribed" id="subscription" value="1" title="<?php /* @escapeNotVerified */ echo __('General Subscription') ?>"<?php if ($block->getIsSubscribed()): ?> checked="checked"<?php endif; ?> class="checkbox">
+                <label for="subscription" class="label"><span><?php /* @escapeNotVerified */ echo __('General Subscription') ?></span></label>
+            </div>
+            <?php /* Extensions placeholder */ ?>
+            <?php echo $block->getChildHtml('customer.form.newsletter.extra')?>
+        </fieldset>
+        <div class="actions-toolbar">
+            <div class="primary"><button type="submit" title="<?php /* @escapeNotVerified */ echo __('Save') ?>" class="action save primary"><span><?php /* @escapeNotVerified */ echo __('Save') ?></span></button></div>
+            <div class="secondary"><a class="action back" href="<?php echo $block->escapeUrl($block->getBackUrl()) ?>"><span><?php /* @escapeNotVerified */ echo __('Back') ?></span></a></div>
         </div>
-        <?php /* Extensions placeholder */ ?>
-        <?php echo $block->getChildHtml('customer.form.newsletter.extra')?>
-    </fieldset>
-    <div class="actions-toolbar">
-        <div class="primary"><button type="submit" title="<?php /* @escapeNotVerified */ echo __('Save') ?>" class="action save primary"><span><?php /* @escapeNotVerified */ echo __('Save') ?></span></button></div>
-        <div class="secondary"><a class="action back" href="<?php echo $block->escapeUrl($block->getBackUrl()) ?>"><span><?php /* @escapeNotVerified */ echo __('Back') ?></span></a></div>
-    </div>
-</form>
-<?php /* Extensions placeholder */ ?>
-<?php echo $block->getChildHtml('customer.form.newsletter.extra2')?>
+    </form>
+    <?php /* Extensions placeholder */ ?>
+    <?php echo $block->getChildHtml('customer.form.newsletter.extra2')?>
+<?php endif; ?>

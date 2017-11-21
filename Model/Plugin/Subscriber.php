@@ -78,7 +78,7 @@ class Subscriber
         $subscriber,
         $customerId
     ) {
-        die('work');
+
 //        $this->_helper->log(__METHOD__);
         $subscriber->loadByCustomerId($customerId);
 //        if ($subscriber->getMailchimpId() != null) {
