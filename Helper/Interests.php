@@ -203,6 +203,7 @@ class Interests extends \Magento\Framework\App\Helper\AbstractHelper
     public function getCustomerSubscribedInterests($listId, $subscriberEmail)
     {
         if($this->subcriberExists($subscriberEmail)){
+
             $subscriberHashEmail = $this->getMd5HashEmail($subscriberEmail);
             $scopeData = $this->getScope();
 
@@ -210,8 +211,17 @@ class Interests extends \Magento\Framework\App\Helper\AbstractHelper
             $scope = $scopeData[0]['scope'];
 
             if($this->mailchimpDataHelper->getApiKey($storeId)) {
-                $interestsDataGroups = $this->mailchimpDataHelper->getApi()->lists->members->get($listId, $subscriberHashEmail);
-                return $interestsDataGroups['interests'];
+                try {
+                    if($this->mailchimpDataHelper->getApi()->lists->members->get($listId, $subscriberHashEmail)){
+                        $interestsDataGroups = $this->mailchimpDataHelper->getApi()->lists->members->get($listId, $subscriberHashEmail);
+                        return $interestsDataGroups['interests'];
+                    }
+
+                }catch (\Exception $e) {
+                    //this case might be when we are waiting for response from mailchimp.
+                    return "request";
+
+                }
             }
         }
         return false;
@@ -241,9 +251,7 @@ class Interests extends \Magento\Framework\App\Helper\AbstractHelper
 
         if($this->customerSession->isLoggedIn()) {
             return $this->customerSession->getCustomer();
-//            echo   $customerSession->getCustomer()->getName()."<br/>";  // get  Full Name
-//            echo   $customerSession->getCustomer()->getFirstname()."<br/>";  // get Customer First name
-//            echo   $customerSession->getCustomer()->getLastname()."<br/>";  // get  Last Name
+
         }
         return false;
     }

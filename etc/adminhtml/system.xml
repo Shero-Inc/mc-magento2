@@ -93,9 +93,14 @@
                 </field>
 
                 <field id="subscribe_group_footer" sortOrder="36" translate="label" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Subscribe to All Groups on Footer</label>
+                    <label>Subscribe to All Groups</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Subscribe to all groups on footer subscription form</comment>
+                    <comment>Subscribe to all groups on footer subscription form and when customer create account</comment>
+                    <depends>
+                        <field id="*/*/active">1</field>
+                        <field id="*/*/activeinterests">1</field>
+
+                    </depends>
                 </field>
 
 

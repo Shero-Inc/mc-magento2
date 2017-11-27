@@ -98,6 +98,7 @@ class Subscriber
         $subscriber,
         $customerId
     ) {
+
 //        $this->_helper->log(__METHOD__);
         $subscriber->loadByCustomerId($customerId);
         $subscriber->setImportMode(true);
@@ -117,11 +118,24 @@ class Subscriber
             try {
                 $emailHash = md5(strtolower($customer->getEmail()));
                 if (!$subscriber->getMailchimpId()) {
-                    $return = $api->lists->members->addOrUpdate($this->_helper->getDefaultList(), $emailHash, null, $status, $mergeVars, null, null, null, null, $email, $status);
+
+                    if($this->interestsHelper->getSelectedGroups($storeId) &&
+                        $this->interestsHelper->allowToSubscribeAllGroupsFooter($storeId)) { //if subscription comes from create account
+                        /** Subscribe to all groups that are selected from admin, for create account form **/
+                        $groupSelectedToSubscribe = explode(',',$this->interestsHelper->getSelectedGroups($storeId));
+
+                        $interestids = array();
+                        foreach ($groupSelectedToSubscribe as $interestId) {
+                            $interestids[$interestId]= true;
+                        }
+                        $return = $api->lists->members->addOrUpdate($this->_helper->getDefaultList(), $emailHash, null, $status, $mergeVars, $interestids, null, null, null, $email, $status);
+                    } else { //let the mailchimp default subscribe
+                        $return = $api->lists->members->addOrUpdate($this->_helper->getDefaultList(), $emailHash, null, $status, $mergeVars, null, null, null, null, $email, $status);
 //                    $this->_helper->log($return);
 //                    if (isset($return['id'])) {
 //                        $subscriber->setMailchimpId($return['id']);
 //                    }
+                    }
                 }
 //                $subscriber->setMailchimpId($emailHash)->save();
             } catch (\Exception $e) {
@@ -135,7 +149,6 @@ class Subscriber
         $subscriber,
         $email
     ) {
-
 
 //        $this->_helper->log(__METHOD__);
         $storeId = $this->_storeManager->getStore()->getId();
