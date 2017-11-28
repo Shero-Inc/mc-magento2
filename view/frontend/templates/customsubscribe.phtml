@@ -3,21 +3,39 @@
 $groups = $block->getSelectedGroups();
 
 ?>
-<form action="/mailchimp/customsubscribe/subscribegroups/" method="post">
-    <label for="email">Email</label>
-    <input type="text" name="email">
-    <input type="hidden" name="customsubscribe" value="1">
-    <?php $row=0; ?>
-    <?php if($groups): ?>
-        <?php foreach ($groups as $group): ?>
-            <input type="checkbox" name="group[]" value="<?php echo $group['id'] ?>"><?php echo $group['label']; ?><br>
-            <?php $row++ ?>
-        <?php endforeach; ?>
-    <?php endif; ?>
+<style>
+    .form.custom-subscribe {
+        display: table;
+    }
+</style>
 
+<form
+      class="form custom-subscribe"
+      novalidate
+      action="<?php echo $block->getUrl('mailchimp/customsubscribe/subscribegroups/') ?>"
+      method="post"
+      data-mage-init='{"validation": {"errorClass": "mage-error"}}'
+      id="newsletter-validate-detail">
+
+    <div class="control">
+        <label for="email">Email</label>
+        <input type="email" name="email"
+               placeholder="<?php /* @escapeNotVerified */ echo __('Enter your email address') ?>"
+               data-validate="{required:true, 'validate-email':true}">
+        <input type="hidden" name="customsubscribe" value="1">
+        <?php $row=0; ?>
+        <?php if($groups): ?>
+            <?php foreach ($groups as $group): ?>
+                <input type="checkbox" name="group[]" value="<?php echo $group['id'] ?>"><?php echo $group['label']; ?><br>
+                <?php $row++ ?>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
 
     <br>
-    <label for="email">Submit</label>
-
-    <input type="submit" name="submit" value="submit">
+    <div class="actions">
+        <button class="action subscribe primary" title="<?php /* @escapeNotVerified */ echo __('Subscribe') ?>" type="submit">
+            <span><?php /* @escapeNotVerified */ echo __('Subscribe') ?></span>
+        </button>
+    </div>
 </form>

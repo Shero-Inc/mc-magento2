@@ -11,6 +11,7 @@ namespace Ebizmarts\MailChimp\Controller\Customsubscribe;
 use Braintree\Exception;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\Controller\ResultFactory;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\View\Result\PageFactory;
 use Magento\Framework\App\Action\Context;
 
@@ -68,9 +69,23 @@ class Subscribegroups extends Action
     public function execute()
     {
         $params = $this->getRequest()->getParams();
+        if(!isset($params['email'])) {
+            $this->messageManager->addError(__("Please fill the email input."));
+            $this->_goBack();
+            return;
+        }
+        if(!isset($params['group'])) {
+            $this->messageManager->addError(__("Please select at least 1 group."));
+            $this->_goBack();
+            return;
+        }
+
         $email = $params['email'];
         $groups = $params['group'];
+
+
         try{
+
             $md5HashEmail = md5(strtolower($email));
             $checkSubscriber = $this->_subscriber->loadByEmail($email);
             if(!$checkSubscriber->isSubscribed()) {
@@ -85,13 +100,18 @@ class Subscribegroups extends Action
                     'subscribed', null, $interestids, null, null, null, $email, 'subscribed');
             }
             $this->messageManager->addSuccess("You subscribed successfully.");
-        }catch (Exception $e) {
-            var_dump($e->getMessage());
-            $this->messageManager->addSuccess($e->getMessage());
+        }catch (\Exception $e) {
+//            var_dump($e->getMessage());
+            $this->messageManager->addError($e->getMessage());
         }
-        $this->_redirect('*/*/index');
+        $this->_goBack();
         $resultPage = $this->_resultPageFactory->create();
         return $resultPage;
+    }
+
+    public function _goBack()
+    {
+        return $this->_redirect('*/*/index');
     }
 
 
